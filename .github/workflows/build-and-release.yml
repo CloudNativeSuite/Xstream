@@ -254,14 +254,14 @@ jobs:
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
           FILE=$(find release-artifacts -name '${{ matrix.platform.file_pattern }}' | head -n 1)
-          echo "Uploading $FILE to /mnt/data/update-server/${{ matrix.platform.remote_path }}"
-          rsync -av "$FILE" root@"$VPS_HOST":/mnt/data/update-server/${{ matrix.platform.remote_path }} --delete
+          echo "Uploading $FILE to /data/update-server/${{ matrix.platform.remote_path }}"
+          rsync -av "$FILE" root@"$VPS_HOST":/data/update-server/${{ matrix.platform.remote_path }} --delete
 
           if [ "${{ matrix.platform.name }}" = "windows" ]; then
             FILE_MSIX=$(find release-artifacts -name '*.msix' | head -n 1)
             if [ -n "$FILE_MSIX" ]; then
-              echo "Uploading $FILE_MSIX to /mnt/data/update-server/xstream-windows-latest/xstream-windows-latest.msix"
-              rsync -av "$FILE_MSIX" root@"$VPS_HOST":/mnt/data/update-server/xstream-windows-latest/xstream-windows-latest.msix --delete
+              echo "Uploading $FILE_MSIX to /data/update-server/xstream-windows-latest/xstream-windows-latest.msix"
+              rsync -av "$FILE_MSIX" root@"$VPS_HOST":/data/update-server/xstream-windows-latest/xstream-windows-latest.msix --delete
             fi
           fi
 
