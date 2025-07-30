@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/log_console.dart';
 
-const String kUpdateBaseUrl = 'https://artifact.onwalk.net/';
+const String kUpdateBaseUrl = 'https://artifact.svc.plus/';
 
 // LogConsole Global Key
 final GlobalKey<LogConsoleState> logConsoleKey = GlobalKey<LogConsoleState>();
