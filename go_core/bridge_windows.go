@@ -90,7 +90,7 @@ func downloadAndExtractXray(destDir string) error {
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return err
 	}
-	resp, err := http.Get("https://artifact.onwalk.net/xray-core/v25.3.6/Xray-windows-64.zip")
+        resp, err := http.Get("https://artifact.svc.plus/xray-core/v25.3.6/Xray-windows-64.zip")
 	if err != nil {
 		return err
 	}
