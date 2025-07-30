@@ -73,7 +73,7 @@ fi
 
 if [ ! -f "$HOME/.local/bin/appimagetool-x86_64.AppImage" ]; then
     wget -O "$HOME/.local/bin/appimagetool-x86_64.AppImage" \
-        https://github.com/AppImage/AppImageKit/releases/download/continuous/obsolete-appimagetool-x86_64.AppImage
+        https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
     chmod +x "$HOME/.local/bin/appimagetool-x86_64.AppImage"
 fi
 
