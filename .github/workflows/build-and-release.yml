@@ -214,11 +214,12 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { name: macos, file_pattern: '*.dmg', remote_path: 'xstream-macos-latest/xstream-macos-latest.dmg' }
-          - { name: linux, file_pattern: 'xstream-linux.zip', remote_path: 'xstream-linux-latest/xstream-linux-latest.zip' }
-          - { name: windows, file_pattern: 'xstream-windows.zip', remote_path: 'xstream-windows-latest/xstream-windows-latest.zip' }
-          - { name: ios, file_pattern: '*.ipa', remote_path: 'xstream-ios-latest/xstream-ios-latest.ipa' }
-          - { name: android, file_pattern: 'app-release.apk', remote_path: 'xstream-android-latest/xstream-android-latest.apk' }
+
+          - { name: macos, file_pattern: '*.dmg', remote_path: 'xstream/macos/latest/xstream-macos-latest.dmg' }
+          - { name: linux, file_pattern: 'xstream-linux.zip', remote_path: 'xstream/linux/latest/xstream-linux-latest.zip' }
+          - { name: windows, file_pattern: 'xstream-windows.zip', remote_path: 'xstream/windows/latest/xstream-windows-latest.zip' }
+          - { name: ios, file_pattern: '*.ipa', remote_path: 'xstream/ios/latest/xstream-ios-latest.ipa' }
+          - { name: android, file_pattern: 'app-release.apk', remote_path: 'xstream/android/latest/xstream-android-latest.apk' }
           - { name: github, file_pattern: '**/*', remote_path: '' }
 
     steps:
@@ -257,6 +258,7 @@ jobs:
           echo "Uploading $FILE to /data/update-server/${{ matrix.platform.remote_path }}"
           rsync -av "$FILE" root@"$VPS_HOST":/data/update-server/${{ matrix.platform.remote_path }} --delete
 
+
           if [ "${{ matrix.platform.name }}" = "windows" ]; then
             FILE_MSIX=$(find release-artifacts -name '*.msix' | head -n 1)
             if [ -n "$FILE_MSIX" ]; then
@@ -264,6 +266,7 @@ jobs:
               rsync -av "$FILE_MSIX" root@"$VPS_HOST":/data/update-server/xstream-windows-latest/xstream-windows-latest.msix --delete
             fi
           fi
+
 
   publish-stores:
     runs-on: ubuntu-latest
