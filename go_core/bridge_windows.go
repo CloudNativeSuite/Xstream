@@ -90,7 +90,7 @@ func downloadAndExtractXray(destDir string) error {
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return err
 	}
-	resp, err := http.Get("https://artifact.onwalk.net/xray-core/v25.3.6/Xray-windows-64.zip")
+        resp, err := http.Get("https://artifact.svc.plus/xray-core/v25.3.6/Xray-windows-64.zip")
 	if err != nil {
 		return err
 	}
@@ -184,10 +184,13 @@ func StartNodeService(name *C.char) *C.char {
 		}
 	}
 
-	// 立即运行任务
-	if out, err := exec.Command("schtasks", "/Run", "/TN", serviceName).CombinedOutput(); err != nil {
+	// 立即后台运行任务
+	cmd := exec.Command("schtasks", "/Run", "/TN", serviceName)
+	if err := cmd.Start(); err != nil {
+		out, _ := cmd.CombinedOutput()
 		return C.CString("error:" + string(out))
 	}
+	go cmd.Wait()
 	return C.CString("success")
 }
 
@@ -301,6 +304,16 @@ func ResetXrayAndConfig(password *C.char) *C.char {
 	exec.Command("schtasks", "/Delete", "/TN", "ray-node-ca.schtasks", "/F").Run()
 	exec.Command("schtasks", "/Delete", "/TN", "ray-node-us.schtasks", "/F").Run()
 	return C.CString("success")
+}
+
+//export StartXray
+func StartXray(configC *C.char) *C.char {
+	return C.CString("error:not supported")
+}
+
+//export StopXray
+func StopXray() *C.char {
+	return C.CString("error:not supported")
 }
 
 // ---- System tray integration ----

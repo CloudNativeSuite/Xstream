@@ -5,13 +5,31 @@ const String defaultXrayJsonTemplate = r'''
   "log": {
     "loglevel": "info"
   },
-  "routing": {
-    "domainStrategy": "IPIfNonMatch",
-    "rules": []
+  "dns": {
+    "servers": [
+      {
+        "address": "<DNS1>",
+        "queryStrategy": "UseIPv4"
+      },
+      {
+        "address": "<DNS2>",
+        "queryStrategy": "UseIPv4"
+      },
+      {
+        "address": "1.1.1.1",
+        "queryStrategy": "UseIPv4"
+      },
+      {
+        "address": "8.8.8.8",
+        "queryStrategy": "UseIPv4"
+      }
+    ],
+    "queryStrategy": "UseIPv4",
+    "disableFallbackIfMatch": true
   },
   "inbounds": [
     {
-      "listen": "127.0.0.1",
+      "listen": "0.0.0.0",
       "port": 1080,
       "protocol": "socks",
       "settings": {
@@ -19,16 +37,24 @@ const String defaultXrayJsonTemplate = r'''
       },
       "sniffing": {
         "enabled": true,
-        "destOverride": ["http", "tls"]
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
       }
     },
     {
-      "listen": "127.0.0.1",
-      "port": 10801,
+      "listen": "0.0.0.0",
+      "port": 1081,
       "protocol": "http",
       "sniffing": {
         "enabled": true,
-        "destOverride": ["http", "tls"]
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
       }
     }
   ],
@@ -68,7 +94,17 @@ const String defaultXrayJsonTemplate = r'''
     {
       "protocol": "blackhole",
       "tag": "block"
+    },
+    {
+      "tag": "dns",
+      "protocol": "dns",
+      "proxySettings": {
+        "tag": "proxy"
+      }
     }
-  ]
+  ],
+  "routing": {
+    "rules": []
+  }
 }
 ''';

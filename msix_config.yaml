@@ -1,0 +1,6 @@
+display_name: Xstream
+publisher_display_name: Xstream Team
+identity_name: XstreamTeam.Xstream
+msix_version: 1.0.0.0
+logo_path: assets/logo.png
+capabilities: internetClient

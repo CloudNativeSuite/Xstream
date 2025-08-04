@@ -80,19 +80,31 @@ extension AppDelegate {
       // ✅ 非 checkNodeStatus 情况
       if isSuccess {
         result("success")
-        self.logToFlutter("info", "命令执行成功: \nCommand: \(command)\nOutput: \(output)")
+        let safeCommand = maskSensitive(command)
+        self.logToFlutter("info", "命令执行成功: \nCommand: \(safeCommand)\nOutput: \(output)")
       } else {
         if command.contains("bootstrap") && output.contains("Service is already loaded") {
           result("服务已在运行")
-          self.logToFlutter("warn", "服务已在运行（重复启动）: \(command)")
+          let safeCommand = maskSensitive(command)
+          self.logToFlutter("warn", "服务已在运行（重复启动）: \(safeCommand)")
         } else {
           result(FlutterError(code: "EXEC_FAILED", message: "Command failed", details: output))
-          self.logToFlutter("error", "命令执行失败: \nCommand: \(command)\nOutput: \(output)")
+          let safeCommand = maskSensitive(command)
+          self.logToFlutter("error", "命令执行失败: \nCommand: \(safeCommand)\nOutput: \(output)")
         }
       }
     } catch {
       result(FlutterError(code: "EXEC_ERROR", message: "Process failed to run", details: error.localizedDescription))
       self.logToFlutter("error", "Process failed to run: \(error.localizedDescription)")
     }
+  }
+
+  private func maskSensitive(_ command: String) -> String {
+    let pattern = #"echo\s+\"([^\"]+)\"\s*\|\s*sudo\s+-S"#
+    if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+      let range = NSRange(command.startIndex..., in: command)
+      return regex.stringByReplacingMatches(in: command, options: [], range: range, withTemplate: "echo \"****\" | sudo -S")
+    }
+    return command
   }
 }

@@ -7,16 +7,20 @@ import '../bindings/bridge_bindings.dart';
 
 class NativeBridge {
   static const MethodChannel _channel = MethodChannel('com.xstream/native');
-  static const MethodChannel _loggerChannel = MethodChannel('com.xstream/logger');
+  static const MethodChannel _loggerChannel =
+      MethodChannel('com.xstream/logger');
 
-  static final bool _useFfi = Platform.isWindows || Platform.isLinux;
+  static final bool _useFfi =
+      Platform.isWindows || Platform.isLinux || Platform.isIOS;
   static BridgeBindings? _bindings;
 
   static bool get _isDesktop =>
       Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
   static BridgeBindings get _ffi {
-    _bindings ??= _useFfi ? BridgeBindings(_openLib()) : throw UnsupportedError('FFI not available');
+    _bindings ??= _useFfi
+        ? BridgeBindings(_openLib())
+        : throw UnsupportedError('FFI not available');
     return _bindings!;
   }
 
@@ -25,6 +29,8 @@ class NativeBridge {
       return ffi.DynamicLibrary.open('libgo_native_bridge.dll');
     } else if (Platform.isLinux) {
       return ffi.DynamicLibrary.open('libgo_native_bridge.so');
+    } else if (Platform.isIOS) {
+      return ffi.DynamicLibrary.process();
     }
     throw UnsupportedError('Unsupported platform');
   }
@@ -48,8 +54,8 @@ class NativeBridge {
       final p5 = vpnNodesConfigPath.toNativeUtf8();
       final p6 = vpnNodesConfigContent.toNativeUtf8();
       final pwd = password.toNativeUtf8();
-      final resPtr = _ffi.writeConfigFiles(
-          p1.cast(), p2.cast(), p3.cast(), p4.cast(), p5.cast(), p6.cast(), pwd.cast());
+      final resPtr = _ffi.writeConfigFiles(p1.cast(), p2.cast(), p3.cast(),
+          p4.cast(), p5.cast(), p6.cast(), pwd.cast());
       final result = resPtr.cast<Utf8>().toDartString();
       _ffi.freeCString(resPtr);
       malloc.free(p1);
@@ -281,5 +287,108 @@ class NativeBridge {
         return '重置失败: $e';
       }
     }
+  }
+
+  /// Start tun2socks-based system proxy on macOS
+  static Future<String> startTun2socks(String password) async {
+    if (!Platform.isMacOS) return '当前平台暂不支持';
+    try {
+      final result = await _channel.invokeMethod<String>('startTun2socks', {
+        'password': password,
+      });
+      return result ?? '启动成功';
+    } on MissingPluginException {
+      return '插件未实现';
+    } catch (e) {
+      return '启动失败: $e';
+    }
+  }
+
+  /// Stop tun2socks-based system proxy on macOS
+  static Future<String> stopTun2socks(String password) async {
+    if (!Platform.isMacOS) return '当前平台暂不支持';
+    try {
+      final result = await _channel.invokeMethod<String>('stopTun2socks', {
+        'password': password,
+      });
+      return result ?? '已停止';
+    } on MissingPluginException {
+      return '插件未实现';
+    } catch (e) {
+      return '停止失败: $e';
+    }
+  }
+
+  /// Enable or disable system SOCKS proxy on macOS
+  static Future<String> setSystemProxy(bool enable, String password) async {
+    if (!Platform.isMacOS) return '当前平台暂不支持';
+    try {
+      final result = await _channel.invokeMethod<String>('setSystemProxy', {
+        'enable': enable,
+        'password': password,
+      });
+      return result ?? 'success';
+    } on MissingPluginException {
+      return '插件未实现';
+    } catch (e) {
+      return '操作失败: $e';
+    }
+  }
+
+  /// Install tun2socks helper scripts to /opt/homebrew/bin
+  static Future<String> installTun2socksScripts(String password) async {
+    if (!Platform.isMacOS) return '当前平台暂不支持';
+    try {
+      final result =
+          await _channel.invokeMethod<String>('installTun2socksScripts', {
+        'password': password,
+      });
+      return result ?? '安装完成';
+    } on MissingPluginException {
+      return '插件未实现';
+    } catch (e) {
+      return '安装失败: $e';
+    }
+  }
+
+  static Future<String> installTun2socksPlist(
+      String content, String password) async {
+    if (!Platform.isMacOS) return '当前平台暂不支持';
+    try {
+      final result =
+          await _channel.invokeMethod<String>('installTun2socksPlist', {
+        'content': content,
+        'password': password,
+      });
+      return result ?? '安装完成';
+    } on MissingPluginException {
+      return '插件未实现';
+    } catch (e) {
+      return '安装失败: $e';
+    }
+  }
+
+  /// Start embedded xray-core via FFI on iOS
+  static String startXray(String configJson) {
+    if (!_useFfi) {
+      throw UnsupportedError('FFI not available');
+    }
+    final conf = configJson.toNativeUtf8();
+    final resPtr = _ffi.startXray(conf.cast());
+    final result = resPtr.cast<Utf8>().toDartString();
+    _ffi.freeCString(resPtr);
+    malloc.free(conf);
+    return result;
+  }
+
+  /// Stop embedded xray-core instance on iOS
+  static String stopXray() {
+    if (!_useFfi) {
+      throw UnsupportedError('FFI not available');
+    }
+    final resPtr = _ffi.stopXray();
+    final result = resPtr.cast<Utf8>().toDartString();
+    _ffi.freeCString(resPtr);
+    return result;
   }
 }

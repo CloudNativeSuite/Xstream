@@ -10,12 +10,16 @@ import UIKit
     GeneratedPluginRegistrant.register(with: self)
     if let controller = window?.rootViewController as? FlutterViewController {
       let channel = FlutterMethodChannel(name: "com.xstream/native", binaryMessenger: controller.binaryMessenger)
-      channel.setMethodCallHandler { call, result in
+      let bundleId = Bundle.main.bundleIdentifier ?? "com.xstream"
+      channel.setMethodCallHandler { [weak self] call, result in
+        guard let self = self else { return }
         switch call.method {
-        case "startNodeService", "stopNodeService", "performAction":
-          result("iOS not supported")
-        case "checkNodeStatus":
-          result(false)
+        case "writeConfigFiles":
+          self.writeConfigFiles(call: call, result: result)
+        case "startNodeService", "stopNodeService", "checkNodeStatus":
+          self.handleServiceControl(call: call, result: result)
+        case "performAction":
+          self.handlePerformAction(call: call, bundleId: bundleId, result: result)
         default:
           result(FlutterMethodNotImplemented)
         }

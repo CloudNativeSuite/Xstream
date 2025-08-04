@@ -31,11 +31,45 @@ flutter build macos
 flutter run -d macos
 或使用调试按钮直接运行项目。
 
-# 目录结构简述
+# 项目结构说明
 
-lib/：Flutter 主代码目录
-macos/：平台特定配置与原生代码（Swift）
-assets/：图标、Xray 配置等静态资源
+## 核心配置文件
+- `pubspec.yaml` - Flutter项目配置文件，包含依赖、版本等信息
+- `Makefile` - 构建脚本，定义各种构建任务
+- `analysis_options.yaml` - Dart代码分析配置
+
+## Flutter应用代码
+- `lib/` - 主要Dart代码目录
+  - `main.dart` - 应用入口文件
+  - `screens/` - 界面文件（主屏幕、设置屏幕等）
+  - `services/` - 服务层代码（VPN配置、更新服务、遥测等）
+  - `utils/` - 工具类（主题、配置、日志等）
+  - `widgets/` - UI组件（按钮、输入框、控制台等）
+  - `templates/` - 配置模板（Xray配置、系统服务等）
+  - `bindings/` - FFI绑定文件
+
+## 平台特定代码
+- `android/` - Android平台代码和配置
+- `ios/` - iOS平台代码和配置
+- `macos/` - macOS平台代码和配置
+- `windows/` - Windows平台代码和配置
+- `linux/` - Linux平台代码和配置
+- `web/` - Web平台代码和配置
+
+## Go核心模块
+- `go_core/` - Go语言编写的核心功能模块
+  - `bridge.go` - 主要桥接代码
+  - `bridge_*.go` - 各平台特定的桥接实现
+
+## 构建和部署
+- `build_scripts/` - 各平台构建脚本
+- `scripts/` - 辅助脚本（图标生成、清理等）
+- `msix_config.yaml` - Windows MSIX包配置
+
+## 文档和资源
+- `docs/` - 项目文档
+- `assets/` - 静态资源（图标、Logo等）
+- `bindings/` - 原生代码绑定文件
 
 # 常见问题
 构建失败、权限错误

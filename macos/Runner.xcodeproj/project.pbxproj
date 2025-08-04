@@ -39,10 +39,15 @@
 		979170302DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 979170292DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift */; };
 		979170312DED493800ABF9A6 /* NativeBridge+Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9791702A2DED493800ABF9A6 /* NativeBridge+Logger.swift */; };
 		979170322DED493800ABF9A6 /* NativeBridge+ServiceControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9791702B2DED493800ABF9A6 /* NativeBridge+ServiceControl.swift */; };
-		979170332DED493800ABF9A6 /* NativeBridge+XrayInit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9791702C2DED493800ABF9A6 /* NativeBridge+XrayInit.swift */; };
-		979170342DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 979170292DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift */; };
-		97AB92F82DF3F9FA00393014 /* reset_xray.sh in Resources */ = {isa = PBXBuildFile; fileRef = 97AB92F72DF3F9FA00393014 /* reset_xray.sh */; };
-		97AB92F92DF3F9FA00393014 /* reset_xray.sh in Resources */ = {isa = PBXBuildFile; fileRef = 97AB92F72DF3F9FA00393014 /* reset_xray.sh */; };
+                979170332DED493800ABF9A6 /* NativeBridge+XrayInit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9791702C2DED493800ABF9A6 /* NativeBridge+XrayInit.swift */; };
+                979170342DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 979170292DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift */; };
+                427575FE6A38263A6A11281E /* NativeBridge+Tun2socks.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE895F364E181E629A2F776F /* NativeBridge+Tun2socks.swift */; };
+                A1DF6B5120C9CDC54B313AE2 /* NativeBridge+Tun2socks.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE895F364E181E629A2F776F /* NativeBridge+Tun2socks.swift */; };
+                AD1CF25792A845398FD69EA1 /* NativeBridge+SystemProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12EB1C85F2CA48B184A02A8A /* NativeBridge+SystemProxy.swift */; };
+                58E72ADC47724EE381E3CA64 /* NativeBridge+SystemProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12EB1C85F2CA48B184A02A8A /* NativeBridge+SystemProxy.swift */; };
+                97AB92F82DF3F9FA00393014 /* reset_xray.sh in Resources */ = {isa = PBXBuildFile; fileRef = 97AB92F72DF3F9FA00393014 /* reset_xray.sh */; };
+               97AB92F92DF3F9FA00393014 /* reset_xray.sh in Resources */ = {isa = PBXBuildFile; fileRef = 97AB92F72DF3F9FA00393014 /* reset_xray.sh */; };
+               2AD6DCD366C24CBCB25B5458 /* tun2socks_service.sh in Resources */ = {isa = PBXBuildFile; fileRef = 3818EC4C8DE941E0B0A2A88D /* tun2socks_service.sh */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,9 +111,12 @@
 		979170292DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NativeBridge+ConfigWriter.swift"; sourceTree = "<group>"; };
 		9791702A2DED493800ABF9A6 /* NativeBridge+Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NativeBridge+Logger.swift"; sourceTree = "<group>"; };
 		9791702B2DED493800ABF9A6 /* NativeBridge+ServiceControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NativeBridge+ServiceControl.swift"; sourceTree = "<group>"; };
-		9791702C2DED493800ABF9A6 /* NativeBridge+XrayInit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NativeBridge+XrayInit.swift"; sourceTree = "<group>"; };
-		97AB92F72DF3F9FA00393014 /* reset_xray.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = reset_xray.sh; path = Resources/xray/reset_xray.sh; sourceTree = SOURCE_ROOT; };
-		E7B9D3DA76B1887117E7E2FB /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+                9791702C2DED493800ABF9A6 /* NativeBridge+XrayInit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NativeBridge+XrayInit.swift"; sourceTree = "<group>"; };
+                EE895F364E181E629A2F776F /* NativeBridge+Tun2socks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NativeBridge+Tun2socks.swift"; sourceTree = "<group>"; };
+                12EB1C85F2CA48B184A02A8A /* NativeBridge+SystemProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NativeBridge+SystemProxy.swift"; sourceTree = "<group>"; };
+                97AB92F72DF3F9FA00393014 /* reset_xray.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = reset_xray.sh; path = Resources/xray/reset_xray.sh; sourceTree = SOURCE_ROOT; };
+               3818EC4C8DE941E0B0A2A88D /* tun2socks_service.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = tun2socks_service.sh; path = Resources/tun2socks/tun2socks_service.sh; sourceTree = SOURCE_ROOT; };
+               E7B9D3DA76B1887117E7E2FB /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -174,10 +182,11 @@
 		33CC11242044D66E0003C045 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				97A1D2B92DEC03E200278BA5 /* xray */,
-				33CC10F22044A3C60003C045 /* Assets.xcassets */,
-				33CC10F42044A3C60003C045 /* MainMenu.xib */,
-				33CC10F72044A3C60003C045 /* Info.plist */,
+                                97A1D2B92DEC03E200278BA5 /* xray */,
+                                03C9FB329FA32ACD0E329818 /* tun2socks */,
+                                33CC10F22044A3C60003C045 /* Assets.xcassets */,
+                                33CC10F42044A3C60003C045 /* MainMenu.xib */,
+                                33CC10F72044A3C60003C045 /* Info.plist */,
 			);
 			name = Resources;
 			path = ..;
@@ -199,9 +208,11 @@
 			children = (
 				979170292DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift */,
 				9791702A2DED493800ABF9A6 /* NativeBridge+Logger.swift */,
-				9791702B2DED493800ABF9A6 /* NativeBridge+ServiceControl.swift */,
-				9791702C2DED493800ABF9A6 /* NativeBridge+XrayInit.swift */,
-				33CC10F02044A3C60003C045 /* AppDelegate.swift */,
+                                9791702B2DED493800ABF9A6 /* NativeBridge+ServiceControl.swift */,
+                                9791702C2DED493800ABF9A6 /* NativeBridge+XrayInit.swift */,
+                               EE895F364E181E629A2F776F /* NativeBridge+Tun2socks.swift */,
+                                12EB1C85F2CA48B184A02A8A /* NativeBridge+SystemProxy.swift */,
+                                33CC10F02044A3C60003C045 /* AppDelegate.swift */,
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
 				33E51913231747F40026EE4D /* DebugProfile.entitlements */,
 				33E51914231749380026EE4D /* Release.entitlements */,
@@ -211,17 +222,25 @@
 			path = Runner;
 			sourceTree = "<group>";
 		};
-		97A1D2B92DEC03E200278BA5 /* xray */ = {
-			isa = PBXGroup;
-			children = (
-				97AB92F72DF3F9FA00393014 /* reset_xray.sh */,
-				972D45822DF2D0D700A356CC /* xray */,
-				972D45832DF2D0D700A356CC /* xray-x86_64 */,
-			);
-			path = xray;
-			sourceTree = "<group>";
-		};
-		D73912EC22F37F3D000D13A0 /* Frameworks */ = {
+                97A1D2B92DEC03E200278BA5 /* xray */ = {
+                        isa = PBXGroup;
+                        children = (
+                                97AB92F72DF3F9FA00393014 /* reset_xray.sh */,
+                                972D45822DF2D0D700A356CC /* xray */,
+                                972D45832DF2D0D700A356CC /* xray-x86_64 */,
+                        );
+                        path = xray;
+                        sourceTree = "<group>";
+                };
+               03C9FB329FA32ACD0E329818 /* tun2socks */ = {
+                        isa = PBXGroup;
+                        children = (
+                               3818EC4C8DE941E0B0A2A88D /* tun2socks_service.sh */,
+                       );
+                       path = tun2socks;
+                       sourceTree = "<group>";
+               };
+                D73912EC22F37F3D000D13A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				34F5E2DC69227D14C4E9F911 /* Pods_Runner.framework */,
@@ -344,22 +363,24 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				97AB92F82DF3F9FA00393014 /* reset_xray.sh in Resources */,
-				972D45842DF2D0D700A356CC /* xray in Resources */,
-				972D45852DF2D0D700A356CC /* xray-x86_64 in Resources */,
-			);
+                               97AB92F82DF3F9FA00393014 /* reset_xray.sh in Resources */,
+                              2AD6DCD366C24CBCB25B5458 /* tun2socks_service.sh in Resources */,
+                               972D45842DF2D0D700A356CC /* xray in Resources */,
+                               972D45852DF2D0D700A356CC /* xray-x86_64 in Resources */,
+                       );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		33CC10EB2044A3C60003C045 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				972D45862DF2D0D700A356CC /* xray in Resources */,
-				972D45872DF2D0D700A356CC /* xray-x86_64 in Resources */,
-				33CC10F32044A3C60003C045 /* Assets.xcassets in Resources */,
-				33CC10F62044A3C60003C045 /* MainMenu.xib in Resources */,
-				97AB92F92DF3F9FA00393014 /* reset_xray.sh in Resources */,
-			);
+                                972D45862DF2D0D700A356CC /* xray in Resources */,
+                                972D45872DF2D0D700A356CC /* xray-x86_64 in Resources */,
+                                33CC10F32044A3C60003C045 /* Assets.xcassets in Resources */,
+                               33CC10F62044A3C60003C045 /* MainMenu.xib in Resources */,
+                               97AB92F92DF3F9FA00393014 /* reset_xray.sh in Resources */,
+                               2AD6DCD366C24CBCB25B5458 /* tun2socks_service.sh in Resources */,
+                       );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
@@ -475,8 +496,10 @@
 				979170312DED493800ABF9A6 /* NativeBridge+Logger.swift in Sources */,
 				979170322DED493800ABF9A6 /* NativeBridge+ServiceControl.swift in Sources */,
 				979170332DED493800ABF9A6 /* NativeBridge+XrayInit.swift in Sources */,
-				979170342DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift in Sources */,
-			);
+                               979170342DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift in Sources */,
+                               427575FE6A38263A6A11281E /* NativeBridge+Tun2socks.swift in Sources */,
+                                58E72ADC47724EE381E3CA64 /* NativeBridge+SystemProxy.swift in Sources */,
+                        );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		33CC10E92044A3C60003C045 /* Sources */ = {
@@ -489,8 +512,10 @@
 				9791702D2DED493800ABF9A6 /* NativeBridge+Logger.swift in Sources */,
 				9791702E2DED493800ABF9A6 /* NativeBridge+ServiceControl.swift in Sources */,
 				9791702F2DED493800ABF9A6 /* NativeBridge+XrayInit.swift in Sources */,
-				979170302DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift in Sources */,
-			);
+                               979170302DED493800ABF9A6 /* NativeBridge+ConfigWriter.swift in Sources */,
+                               A1DF6B5120C9CDC54B313AE2 /* NativeBridge+Tun2socks.swift in Sources */,
+                                AD1CF25792A845398FD69EA1 /* NativeBridge+SystemProxy.swift in Sources */,
+                        );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
@@ -607,7 +632,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+                                MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -691,7 +716,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+                                MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
@@ -741,7 +766,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+                                MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;

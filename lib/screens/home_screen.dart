@@ -1,9 +1,17 @@
 // lib/screens/home_screen.dart
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:archive/archive_io.dart';
+
 import '../../utils/native_bridge.dart';
-import '../../utils/global_config.dart';
+import '../../utils/global_config.dart'
+    show GlobalState, GlobalApplicationConfig;
+import '../../utils/app_logger.dart';
+import '../l10n/app_localizations.dart';
 import '../../services/vpn_config_service.dart';
+import '../widgets/log_console.dart' show LogLevel;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,13 +24,12 @@ class _HomeScreenState extends State<HomeScreen> {
   String _activeNode = '';
   List<VpnNode> vpnNodes = [];
   final Set<String> _selectedNodeNames = {};
-  bool _isLoading = false;
 
   void _showMessage(String msg, {Color? bgColor}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: bgColor),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: bgColor));
   }
 
   @override
@@ -32,22 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _initializeConfig() async {
-    setState(() => _isLoading = true);
     await VpnConfig.load();
     if (!mounted) return;
     setState(() {
       vpnNodes = VpnConfig.nodes;
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _reloadNodes() async {
-    setState(() => _isLoading = true);
-    await VpnConfig.load();
-    if (!mounted) return;
-    setState(() {
-      vpnNodes = VpnConfig.nodes;
-      _isLoading = false;
     });
   }
 
@@ -55,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final nodeName = node.name.trim();
     if (nodeName.isEmpty) return;
 
-    setState(() => _isLoading = true);
+    // start or stop node service
 
     if (_activeNode == nodeName) {
       final msg = await NativeBridge.stopNodeService(nodeName);
@@ -72,8 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       if (isRunning) {
         setState(() => _activeNode = nodeName);
-        _showMessage('⚠️ 服务已在运行');
-        setState(() => _isLoading = false);
+        _showMessage(context.l10n.get('serviceRunning'));
         return;
       }
 
@@ -82,24 +76,166 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _activeNode = nodeName);
       _showMessage(msg);
     }
-
-    setState(() => _isLoading = false);
   }
 
-  Future<void> _deleteSelectedNodes() async {
-    setState(() => _isLoading = true);
-
-    final toDelete = vpnNodes.where((e) => _selectedNodeNames.contains(e.name)).toList();
-    for (final node in toDelete) {
-      await VpnConfig.deleteNodeFiles(node);
+  Future<void> onSyncConfig() async {
+    addAppLog('开始同步配置...');
+    try {
+      await VpnConfig.load();
+      addAppLog('✅ 已同步配置文件');
+      if (!mounted) return;
+      setState(() {
+        vpnNodes = VpnConfig.nodes;
+      });
+    } catch (e) {
+      addAppLog('[错误] 同步失败: $e', level: LogLevel.error);
     }
-    _selectedNodeNames.clear();
-    await _reloadNodes();
-    if (!mounted) return;
+  }
 
-    _showMessage('✅ 已删除 ${toDelete.length} 个节点并更新配置');
+  Future<void> onDeleteConfig() async {
+    final isUnlocked = GlobalState.isUnlocked.value;
+    if (!isUnlocked) {
+      addAppLog('请先解锁以删除配置', level: LogLevel.warning);
+      return;
+    }
 
-    setState(() => _isLoading = false);
+    final names = _selectedNodeNames.toList();
+    if (names.isEmpty) {
+      addAppLog('未选择要删除的节点', level: LogLevel.warning);
+      return;
+    }
+
+    addAppLog('开始删除配置...');
+    try {
+      int count = 0;
+      for (final name in names) {
+        final node = vpnNodes.firstWhere((n) => n.name == name);
+        await VpnConfig.deleteNodeFiles(node);
+        count++;
+      }
+      await VpnConfig.load();
+      addAppLog('✅ 已删除 $count 个节点并更新配置');
+      if (!mounted) return;
+      setState(() {
+        vpnNodes = VpnConfig.nodes;
+        if (names.contains(_activeNode)) {
+          _activeNode = '';
+        }
+        _selectedNodeNames.clear();
+      });
+    } catch (e) {
+      addAppLog('[错误] 删除失败: $e', level: LogLevel.error);
+    }
+  }
+
+  Future<void> onSaveConfig() async {
+    addAppLog('开始保存配置...');
+    try {
+      final path = await VpnConfig.getConfigPath();
+      await VpnConfig.saveToFile();
+      addAppLog('✅ 配置已保存到: $path');
+    } catch (e) {
+      addAppLog('[错误] 保存失败: $e', level: LogLevel.error);
+    }
+  }
+
+  Future<void> onImportConfig() async {
+    final controller = TextEditingController();
+    final path = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(context.l10n.get('importConfig')),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: '/path/to/backup.zip'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.get('cancel')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text),
+              child: Text(context.l10n.get('confirm')),
+            ),
+          ],
+        );
+      },
+    );
+    if (path == null || path.trim().isEmpty) return;
+    addAppLog('开始导入配置...');
+    try {
+      final file = File(path.trim());
+      if (!await file.exists()) {
+        addAppLog('备份文件不存在', level: LogLevel.error);
+        return;
+      }
+      final bytes = await file.readAsBytes();
+      final archive = ZipDecoder().decodeBytes(bytes);
+      for (final entry in archive) {
+        final name = entry.name;
+        String dest;
+        if (name == 'vpn_nodes.json') {
+          dest = await VpnConfig.getConfigPath();
+        } else if (name.endsWith('.json')) {
+          final prefix = await GlobalApplicationConfig.getXrayConfigPath();
+          dest = '$prefix$name';
+        } else if (name.endsWith('.plist') ||
+            name.endsWith('.service') ||
+            name.endsWith('.schtasks')) {
+          dest = await GlobalApplicationConfig.getServicePath(name);
+        } else {
+          continue;
+        }
+        final out = File(dest);
+        await out.create(recursive: true);
+        await out.writeAsBytes(entry.content as List<int>);
+      }
+      await VpnConfig.load();
+      if (!mounted) return;
+      setState(() {
+        vpnNodes = VpnConfig.nodes;
+        _selectedNodeNames.clear();
+        _activeNode = '';
+      });
+      addAppLog('✅ 已导入配置');
+    } catch (e) {
+      addAppLog('[错误] 导入失败: $e', level: LogLevel.error);
+    }
+  }
+
+  Future<void> onExportConfig() async {
+    addAppLog('开始导出配置...');
+    try {
+      final configPath = await VpnConfig.getConfigPath();
+      final dir = File(configPath).parent.path;
+      final backupPath =
+          '$dir/vpn_backup_${DateTime.now().millisecondsSinceEpoch}.zip';
+
+      final encoder = ZipFileEncoder();
+      encoder.create(backupPath);
+      encoder.addFile(File(configPath), 'vpn_nodes.json');
+      for (final node in VpnConfig.nodes) {
+        final cfg = File(node.configPath);
+        if (await cfg.exists()) {
+          encoder.addFile(cfg, cfg.uri.pathSegments.last);
+        }
+        final servicePath = await GlobalApplicationConfig.getServicePath(
+          node.serviceName,
+        );
+        final svc = File(servicePath);
+        if (await svc.exists()) {
+          encoder.addFile(svc, svc.uri.pathSegments.last);
+        }
+      }
+      encoder.close();
+
+      addAppLog('✅ 配置已导出: $backupPath');
+      _showMessage('已导出到: $backupPath');
+    } catch (e) {
+      addAppLog('[错误] 导出失败: $e', level: LogLevel.error);
+    }
   }
 
   @override
@@ -107,123 +243,93 @@ class _HomeScreenState extends State<HomeScreen> {
     return ValueListenableBuilder<bool>(
       valueListenable: GlobalState.isUnlocked,
       builder: (context, isUnlocked, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            bool isLargeScreen = constraints.maxWidth > 600;
-            bool isDesktop = Theme.of(context).platform == TargetPlatform.macOS ||
-                Theme.of(context).platform == TargetPlatform.linux ||
-                Theme.of(context).platform == TargetPlatform.windows;
-
-            final content = vpnNodes.isEmpty
-                ? const Center(child: Text('暂无加速节点，请先添加。'))
-                : ListView.builder(
-                    itemCount: vpnNodes.length,
-                    itemBuilder: (context, index) {
-                      final node = vpnNodes[index];
-                      final isActive = _activeNode == node.name;
-                      final isSelected = _selectedNodeNames.contains(node.name);
-                      return ListTile(
-                        title: Text('${node.countryCode.toUpperCase()} | ${node.name}'),
-                        subtitle: const Text('VLESS | tcp'),
-                        leading: isUnlocked
-                            ? Checkbox(
-                                value: isSelected,
-                                onChanged: (checked) {
-                                  setState(() {
-                                    if (checked == true) {
-                                      _selectedNodeNames.add(node.name);
-                                    } else {
-                                      _selectedNodeNames.remove(node.name);
-                                    }
-                                  });
-                                },
-                              )
-                            : null,
-                        trailing: IconButton(
-                          icon: Icon(
-                            isActive ? Icons.stop_circle : Icons.play_circle_fill,
-                            color: isActive ? Colors.red : Colors.green,
-                          ),
-                          onPressed: isUnlocked ? () => _toggleNode(node) : null,
-                        ),
-                      );
-                    },
-                  );
-
-            return isLargeScreen && isDesktop
-                ? Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Container(
-                          color: Colors.grey[200],
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Service Overview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 8),
-                                  const Text('Address: Socks5://127.0.0.1:1080'),
-                                  const SizedBox(height: 8),
-                                  const Text('Latency: N/A'),
-                                  const SizedBox(height: 8),
-                                  const Text('Loss: N/A'),
-                                  const Divider(height: 32),
-                                  ElevatedButton.icon(
-                                    icon: const Icon(Icons.sync),
-                                    label: const Text('同步配置'),
-                                    onPressed: _isLoading
-                                        ? null
-                                        : () async {
-                                            try {
-                                              await _reloadNodes();
-                                              if (!mounted) return;
-                                              final path = await VpnConfig.getConfigPath();
-                                              if (!mounted) return;
-                                              _showMessage('🔄 已同步配置文件：\n- $path');
-                                            } catch (e) {
-                                              if (!mounted) return;
-                                              _showMessage('❌ 同步失败: $e', bgColor: Colors.red);
-                                            }
-                                          },
-                                  ),
-                                  const SizedBox(height: 4),
-                                  ElevatedButton.icon(
-                                    icon: const Icon(Icons.delete_forever),
-                                    label: const Text('删除配置'),
-                                    onPressed: _isLoading || _selectedNodeNames.isEmpty
-                                        ? null
-                                        : _deleteSelectedNodes,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  ElevatedButton.icon(
-                                    icon: const Icon(Icons.save),
-                                    label: const Text('保存配置'),
-                                    onPressed: _isLoading
-                                        ? null
-                                        : () async {
-                                            final path = await VpnConfig.getConfigPath();
-                                            if (!mounted) return;
-                                            await VpnConfig.saveToFile();
-                                            if (!mounted) return;
-                                            _showMessage('✅ 配置已保存到：\n$path');
-                                          },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+        final content = vpnNodes.isEmpty
+            ? Center(child: Text(context.l10n.get('noNodes')))
+            : ListView.builder(
+                itemCount: vpnNodes.length,
+                itemBuilder: (context, index) {
+                  final node = vpnNodes[index];
+                  final isActive = _activeNode == node.name;
+                  final isSelected = _selectedNodeNames.contains(node.name);
+                  return ListTile(
+                    title: Text(
+                      '${node.countryCode.toUpperCase()} | ${node.name}',
+                    ),
+                    subtitle: const Text('VLESS | tcp'),
+                    leading: isUnlocked
+                        ? Checkbox(
+                            value: isSelected,
+                            onChanged: (checked) {
+                              setState(() {
+                                if (checked == true) {
+                                  _selectedNodeNames.add(node.name);
+                                } else {
+                                  _selectedNodeNames.remove(node.name);
+                                }
+                              });
+                            },
+                          )
+                        : null,
+                    trailing: IconButton(
+                      icon: Icon(
+                        isActive ? Icons.stop_circle : Icons.play_circle_fill,
+                        color: isActive ? Colors.red : Colors.green,
                       ),
-                      Expanded(flex: 2, child: content),
-                    ],
-                  )
-                : content;
-          },
+                      onPressed: isUnlocked ? () => _toggleNode(node) : null,
+                    ),
+                  );
+                },
+              );
+
+        return Stack(
+          children: [
+            content,
+            Positioned(
+              bottom: 16,
+              // Leave space for the main FloatingActionButton
+              right: 88,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingActionButton.small(
+                    heroTag: "sync",
+                    onPressed: isUnlocked ? onSyncConfig : null,
+                    tooltip: context.l10n.get('syncConfig'),
+                    child: const Icon(Icons.sync),
+                  ),
+                  const SizedBox(width: 8),
+                  FloatingActionButton.small(
+                    heroTag: "import",
+                    onPressed: onImportConfig,
+                    tooltip: context.l10n.get('importConfig'),
+                    child: const Icon(Icons.upload_file),
+                  ),
+                  const SizedBox(width: 8),
+                  FloatingActionButton.small(
+                    heroTag: "export",
+                    onPressed: onExportConfig,
+                    tooltip: context.l10n.get('exportConfig'),
+                    child: const Icon(Icons.download),
+                  ),
+                  const SizedBox(width: 8),
+                  FloatingActionButton.small(
+                    heroTag: "delete",
+                    onPressed: isUnlocked ? onDeleteConfig : null,
+                    tooltip: context.l10n.get('deleteConfig'),
+                    backgroundColor: Colors.red[400],
+                    child: const Icon(Icons.delete_forever),
+                  ),
+                  const SizedBox(width: 8),
+                  FloatingActionButton.small(
+                    heroTag: "apply",
+                    onPressed: onSaveConfig,
+                    tooltip: context.l10n.get('saveConfig'),
+                    child: const Icon(Icons.save),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );

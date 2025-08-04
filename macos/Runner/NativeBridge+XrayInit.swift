@@ -15,7 +15,7 @@ extension AppDelegate {
     case "initXray":
       self.runInitXray(bundleId: bundleId, result: result)
     case "updateXrayCore":
-      self.runInitXray(bundleId: bundleId, result: result)
+      self.runUpdateXrayCore(result: result)
     case "isXrayDownloading":
       result("0")
     case "resetXrayAndConfig":
@@ -76,9 +76,90 @@ do shell script "\(commandJoined.replacingOccurrences(of: "\"", with: "\\\""))" 
     }
   }
 
+  func runUpdateXrayCore(result: @escaping FlutterResult) {
+    let archProcess = Process()
+    archProcess.launchPath = "/usr/bin/uname"
+    archProcess.arguments = ["-m"]
+    let archPipe = Pipe()
+    archProcess.standardOutput = archPipe
+    do {
+      try archProcess.run()
+    } catch {
+      result("❌ 获取架构失败")
+      return
+    }
+    archProcess.waitUntilExit()
+    let archData = archPipe.fileHandleForReading.readDataToEndOfFile()
+    let arch = String(data: archData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+    let urlString: String
+    if arch == "arm64" {
+      urlString = "https://artifact.svc.plus/xray-core/v25.3.6/Xray-macos-arm64-v8a.zip"
+    } else {
+      urlString = "https://artifact.svc.plus/xray-core/v25.3.6/Xray-macos-64.zip"
+    }
+
+    guard let url = URL(string: urlString) else {
+      result("❌ 无效的下载地址")
+      return
+    }
+
+    DispatchQueue.global(qos: .background).async {
+      let task = URLSession.shared.downloadTask(with: url) { localURL, _, error in
+        guard let localURL = localURL, error == nil else {
+          self.logToFlutter("error", "下载失败: \(error?.localizedDescription ?? "unknown")")
+          return
+        }
+
+        let fm = FileManager.default
+        let tempDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try? fm.createDirectory(at: tempDir, withIntermediateDirectories: true)
+
+        let unzip = Process()
+        unzip.launchPath = "/usr/bin/unzip"
+        unzip.arguments = ["-o", localURL.path, "-d", tempDir.path]
+        try? unzip.run()
+        unzip.waitUntilExit()
+
+        var xrayPath = tempDir.appendingPathComponent("xray").path
+        if !fm.fileExists(atPath: xrayPath) {
+          if let first = try? fm.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil).first {
+            let candidate = first.appendingPathComponent("xray")
+            if fm.fileExists(atPath: candidate.path) {
+              xrayPath = candidate.path
+            }
+          }
+        }
+
+        let raw = "cp -f \"\(xrayPath)\" /opt/homebrew/bin/xray ; chmod +x /opt/homebrew/bin/xray"
+        let escaped = raw
+          .replacingOccurrences(of: "\\", with: "\\\\")
+          .replacingOccurrences(of: "\"", with: "\\\"")
+
+        let script = """
+do shell script "\(escaped)" with administrator privileges
+"""
+        let appleScript = NSAppleScript(source: script)
+        var scriptError: NSDictionary? = nil
+        _ = appleScript?.executeAndReturnError(&scriptError)
+        if scriptError != nil {
+          self.logToFlutter("error", "Xray 更新失败: \(String(describing: scriptError))")
+        } else {
+          self.logToFlutter("info", "Xray 更新完成")
+        }
+
+        try? fm.removeItem(at: tempDir)
+      }
+      task.resume()
+    }
+
+    result("info:download started")
+  }
+
   func runResetXray(bundleId: String, password: String, result: @escaping FlutterResult) {
   let rawShell = """
 set -e
+launchctl remove com.xstream.xray-node-trial || true
 launchctl remove com.xstream.xray-node-jp || true
 launchctl remove com.xstream.xray-node-ca || true
 launchctl remove com.xstream.xray-node-us || true

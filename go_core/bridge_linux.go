@@ -137,7 +137,7 @@ func WriteConfigFiles(xrayPathC, xrayContentC, servicePathC, serviceContentC, vp
 }
 
 func downloadAndInstallXray() error {
-	cmd := "curl -L https://artifact.onwalk.net/xray-core/v25.3.6/Xray-linux-64.zip -o Xray-linux-64.zip && " +
+    cmd := "curl -L https://artifact.svc.plus/xray-core/v25.3.6/Xray-linux-64.zip -o Xray-linux-64.zip && " +
 		"mkdir -pv /opt/bin/ && " +
 		"unzip -o Xray-linux-64.zip && " +
 		"cp Xray-linux-64/xray /opt/bin/xray && chmod +x /opt/bin/xray"
@@ -249,6 +249,16 @@ func ResetXrayAndConfig(passwordC *C.char) *C.char {
 		return C.CString("error:" + out)
 	}
 	return C.CString("success")
+}
+
+//export StartXray
+func StartXray(configC *C.char) *C.char {
+	return C.CString("error:not supported")
+}
+
+//export StopXray
+func StopXray() *C.char {
+	return C.CString("error:not supported")
 }
 
 // ---- System tray integration ----

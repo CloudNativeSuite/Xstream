@@ -34,3 +34,5 @@ GOOS=windows GOARCH=amd64 CGO_ENABLED=1 \
 
 生成的动态库放置在与可执行文件同级的目录下，`NativeBridge` 会在运行时加载并
 调用其中导出的函数，若未找到对应文件则自动回退至 `MethodChannel`。
+
+macOS 版本继续通过 Flutter 插件与 Swift 交互，Windows 和 Linux 则使用 `dart:ffi` 调用上文生成的动态库，当库不可用时仍会退回 `MethodChannel` 以保证兼容性。

@@ -21,6 +21,10 @@ class AppDelegate: FlutterAppDelegate {
 
         case "startNodeService", "stopNodeService", "checkNodeStatus":
           self.handleServiceControl(call: call, bundleId: bundleId, result: result)
+        case "startTun2socks", "stopTun2socks", "installTun2socksScripts", "installTun2socksPlist":
+          self.handleTun2socks(call: call, result: result)
+        case "setSystemProxy":
+          self.handleSystemProxy(call: call, result: result)
 
         case "performAction":
           self.handlePerformAction(call: call, bundleId: bundleId, result: result)

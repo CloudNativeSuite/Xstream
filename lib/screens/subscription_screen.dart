@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../utils/global_config.dart';
 import '../../widgets/log_console.dart';
+import '../../utils/app_logger.dart';
 import '../../services/vpn_config_service.dart';
+import '../l10n/app_localizations.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -45,7 +47,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       setState(() {
         _message = '⚠️ 请填写所有必填项！';
       });
-      logConsoleKey.currentState?.addLog('缺少必填项或 Bundle ID', level: LogLevel.error); // Log missing fields or bundleId
+      addAppLog('缺少必填项或 Bundle ID', level: LogLevel.error); // Log missing fields or bundleId
       return;
     }
 
@@ -53,7 +55,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       setState(() {
         _message = '🔒 请先点击右上角的解锁按钮。';
       });
-      logConsoleKey.currentState?.addLog('请先解锁后再创建配置', level: LogLevel.warning); // Log warning
+      addAppLog('请先解锁后再创建配置', level: LogLevel.warning); // Log warning
     } else if (password.isNotEmpty) {
       // Call VpnConfigService to generate content
       VpnConfig.generateContent(
@@ -69,14 +71,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           });
         },
         logMessage: (msg) {
-          logConsoleKey.currentState?.addLog(msg);
+          addAppLog(msg);
         },
       );
     } else {
       setState(() {
         _message = '⚠️ 无法获取 sudo 密码。';
       });
-      logConsoleKey.currentState?.addLog('无法获取 sudo 密码', level: LogLevel.error); // Log error
+      addAppLog('无法获取 sudo 密码', level: LogLevel.error); // Log error
     }
   }
 
@@ -84,7 +86,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('添加加速节点配置'),
+        title: Text(context.l10n.get('addNodeConfig')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -93,28 +95,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           children: [
             TextField(
               controller: _nodeNameController,
-              decoration: const InputDecoration(labelText: '节点名（如 US-Node）'),
+              decoration: InputDecoration(labelText: context.l10n.get('nodeName')),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _domainController,
-              decoration: const InputDecoration(labelText: '服务器域名'),
+              decoration: InputDecoration(labelText: context.l10n.get('serverDomain')),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _portController,
-              decoration: const InputDecoration(labelText: '端口号'),
+              decoration: InputDecoration(labelText: context.l10n.get('port')),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _uuidController,
-              decoration: const InputDecoration(labelText: 'UUID'),
+              decoration: InputDecoration(labelText: context.l10n.get('uuid')),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _onCreateConfig,
-              child: const Text('生成配置并保存'),
+              child: Text(context.l10n.get('generateSave')),
             ),
             const SizedBox(height: 16),
             Text(_message, style: const TextStyle(color: Colors.red)),

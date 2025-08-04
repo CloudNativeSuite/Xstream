@@ -11,6 +11,13 @@
 5. 将私钥内容与 API Key 分别写入 GitHub Secret：
    - `APP_STORE_API_KEY`：API Key 字符串（例如 ABCD1234EF）。
    - `APP_STORE_ISSUER_ID`：Issuer ID 字符串。
+6. 在 Xcode 中为 Runner 目标启用 **Network Extension** 和 **App Groups** 能力，
+   对应的 entitlements 可参考 `ios/Runner/Runner.entitlements`。确保 Podfile 中
+   已设置 `platform :ios, '14.0'`。
+7. 如需提交 **macOS** 版本，请将 `macos/Podfile` 的平台设置调整为 `platform :osx,
+   '12.0'`，并在 `Runner.xcodeproj` 中统一 `MACOSX_DEPLOYMENT_TARGET` 为 12.0。
+   同时在 `macos/Runner/Release.entitlements` 启用 `com.apple.security.app-
+   sandbox` 与 `com.apple.security.network.server` 权限。
 
 ## Google Play
 
@@ -29,6 +36,9 @@
    - `MS_STORE_TENANT_ID`：Azure Tenant ID。
    - `MS_STORE_CLIENT_ID`：注册应用的 Client ID。
    - `MS_STORE_CLIENT_SECRET`：创建的 Client Secret。
+
+完成凭证配置后，请确保构建流程生成 `.msix` 包（见 `windows-build.md` 第 5 步），
+工作流会自动上传该文件到 Microsoft Store。
 
 配置完成后，publish-stores 工作即会使用这些凭证自动上传构建产物，并在部署后输出对应的测试链接。
 

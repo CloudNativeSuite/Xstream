@@ -16,6 +16,7 @@
 - 解耦式界面设计，支持跨平台构建
 - Windows/Linux 版本最小化时自动隐藏到系统托盘（右下角）
 - Windows 版本支持计划任务部署与后台运行
+- Windows 版本现已支持生成 MSIX 安装包并上架 Microsoft Store
 
 ---
 
@@ -40,58 +41,24 @@
 
 - 📘 [用户使用手册](docs/user-manual.md)
 - 🛠️ [开发者文档（macOS 开发环境搭建）](docs/dev-guide.md)
+- 📱 [iOS 设计文档](docs/ios-design.md)
 - 🐧 [Linux systemd 运行指南](docs/linux-xray-systemd.md)
 - 🪟 [Windows 计划任务运行指南](docs/windows-task-scheduler.md)
+- 🍎 [macOS tun2socks 全局代理](docs/macos-global-vpn.md)
+- 🍎 [macOS launchd 服务脚本](docs/macos-launchd-service.md)
 
-按照 [Windows 开发环境搭建](docs/windows-build.md) 文档安装 **MinGW-w64** 后，执行脚本即可生成 `libgo_native_bridge.dll`：
+切换到 **隧道模式** 后，应用会自动启动内置的 tun2socks 服务；选择 **代理模式** 则停止该服务。
 
-./build_scripts/build_windows.sh
-完成 DLL 构建后再运行 `flutter build windows` 即可。
+更多平台构建步骤与桥接架构可参考下列文档：
 
-## 🐧 Linux 构建须知
+- [Windows 构建指南](docs/windows-build.md)
+- [Linux 构建须知](docs/linux-build.md)
+- [iOS 设计文档](docs/ios-design.md#xray-core-%E9%9B%86%E6%88%90)
+- [FFI 桥接架构](docs/ffi-bridge-architecture.md)
 
-Linux 平台同样需要先生成 `libgo_native_bridge.so`，执行：
+## 📚 许可证与致谢
 
-```bash
-./build_scripts/build_linux.sh
-```
-
-脚本会优先使用与 `flutter` 打包在一起的 `clang/clang++`，以确保编译
-出的库和桌面应用依赖同一套 glibc。如未找到则退回系统的 `clang`，
-二者都缺失时脚本会报错终止。
-
-该脚本在 CI 中也会被调用，随后运行以下命令构建桌面应用：
-
-```bash
-CC=/snap/flutter/current/usr/bin/clang \
-CXX=/snap/flutter/current/usr/bin/clang++ \
-flutter build linux --release -v
-```
-如果 `flutter` 并非以 Snap 形式安装，可将上述路径替换为实际安装目
-录下的 `clang`/`clang++`，务必保持与 `build_linux.sh` 使用的编译器一致
-，否则可能出现 `pthread_*` 相关链接错误。
-
-依赖 ImageMagick，若未安装请先安装 `convert` 命令。
-此外，系统托盘功能依赖 `libayatana-appindicator3-dev`（旧发行版可安装 `libappindicator3-dev`）。若缺失该库，`go build` 会因 `pkg-config` 找不到 `ayatana-appindicator3-0.1` 而报错。
-
-## 🪟 Windows 构建须知
-
-Windows 平台需要依赖 Go 编译工具生成原生桥接库。请确保在构建前已安装 Go (推荐 1.20 及以上版本) 并将 `go` 命令加入 `PATH` 环境变量，否则 Visual Studio 构建阶段会报错 `MSB8066`。
-
-如遇 `go build` 相关错误，可按照 [Windows 开发环境搭建](docs/windows-build.md) 文档安装 **MinGW-w64**，并在 `go_core` 目录执行
-
-```powershell
-go env CGO_ENABLED   # 应输出 1
-go build -buildmode=c-archive -o libgo_logic.a
-```
-
-成功后会生成 `libgo_logic.a` 与 `libgo_logic.h`，再运行 `flutter build windows` 即可。
-
-## 🖥️ 桥接实现
-
-XStream 在桌面端采用两套原生交互方式：
-
-- **macOS** 继续使用 Flutter 插件，通过 `MethodChannel` 与 Swift 实现的逻辑通信。
-- **Windows 和 Linux** 使用 `dart:ffi` 加载 `nativebridge` 动态库直接调用 Go 导出的 C 接口，并在库不可用时回退到 `MethodChannel`。
-
-这种设计确保 macOS 版本与旧实现兼容，同时减少其他平台对插件的依赖。
+- 本项目整体遵循 [GNU GPLv3](LICENSE) 开源协议。
+- VPN/TUN 功能部分引用了 [tun2socks](https://github.com/xjasonlyu/tun2socks) ，该项目基于 MIT License 发布。
+- 核心网络功能依赖 [Xray-core](https://github.com/XTLS/Xray-core) ，遵循 Mozilla Public License 2.0。
+- 桥接库 [libXray](https://github.com/XTLS/libXray) 使用 MIT License 发布。

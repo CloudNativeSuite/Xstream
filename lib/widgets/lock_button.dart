@@ -1,6 +1,7 @@
 // lib/widgets/lock_button.dart
 import 'package:flutter/material.dart';
 import '../utils/global_config.dart';
+import '../l10n/app_localizations.dart';
 
 class LockButton extends StatefulWidget {
   final Function(String)? onUnlock;
@@ -21,23 +22,23 @@ class _LockButtonState extends State<LockButton> {
       builder: (context) {
         TextEditingController passwordController = TextEditingController();
         return AlertDialog(
-          title: const Text('输入密码解锁'),
+          title: Text(context.l10n.get('unlockPrompt')),
           content: TextField(
             controller: passwordController,
             obscureText: true,
-            decoration: const InputDecoration(
-              labelText: '密码',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: context.l10n.get('password'),
+              border: const OutlineInputBorder(),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消'),
+              child: Text(context.l10n.get('cancel')),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(passwordController.text),
-              child: const Text('确认'),
+              child: Text(context.l10n.get('confirm')),
             ),
           ],
         );
