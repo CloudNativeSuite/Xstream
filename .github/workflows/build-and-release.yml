@@ -197,9 +197,9 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { name: macos, file_pattern: '*.dmg', remote_path: 'xstream-macos-latest/xstream-macos-latest.dmg' }
-          - { name: linux, file_pattern: 'xstream-linux.zip', remote_path: 'xstream-linux-latest/xstream-linux-latest.zip' }
-          - { name: windows, file_pattern: 'xstream-windows.zip', remote_path: 'xstream-windows-latest/xstream-windows-latest.zip' }
+          - { name: macos, file_pattern: '*.dmg', remote_path: 'xstream/macos/stable/xstream-macos-latest.dmg' }
+          - { name: linux, file_pattern: 'xstream-linux.zip', remote_path: 'xstream/linux/stable//xstream-linux-latest.zip' }
+          - { name: windows, file_pattern: 'xstream-windows.zip', remote_path: 'xstream/windows/stable/xstream-windows-latest.zip' }
           - { name: github, file_pattern: '**/*', remote_path: '' }
 
     steps:
@@ -235,8 +235,8 @@ jobs:
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
           FILE=$(find release-artifacts -name '${{ matrix.platform.file_pattern }}' | head -n 1)
-          echo "Uploading $FILE to /mnt/data/update-server/${{ matrix.platform.remote_path }}"
-          rsync -av "$FILE" root@"$VPS_HOST":/mnt/data/update-server/${{ matrix.platform.remote_path }} --delete
+          echo "Uploading $FILE to /data/update-server/${{ matrix.platform.remote_path }}"
+          rsync -av "$FILE" root@"$VPS_HOST":/data/update-server/${{ matrix.platform.remote_path }} --delete
 
   publish-stores:
     runs-on: ubuntu-latest
