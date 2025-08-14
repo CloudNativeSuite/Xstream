@@ -50,7 +50,7 @@ jobs:
           - platform: android
             arch: arm64
 
-    runs-on: ${{ fromJson('{"windows":"windows-latest","linux":"ubuntu-22.04","android":"ubuntu-latest","macos":"macos-latest","ios":"macos-latest"}')[matrix.platform] }}
+    runs-on: ${{ fromJson('{"windows":"windows-latest","linux":"ubuntu-22.04","android":"ubuntu-latest","macos":"macos-latest","ios":"macos-13"}')[matrix.platform] }}
 
     env:
       PLATFORM: ${{ matrix.platform }}
