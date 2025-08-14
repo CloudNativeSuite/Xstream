@@ -81,6 +81,16 @@ jobs:
           flutter --version
           flutter doctor
 
+      - name: Select latest Xcode 15
+        if: ${{ matrix.platform == 'ios' }}
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15'
+
+      - name: Show Xcode version
+        if: ${{ matrix.platform == 'ios' }}
+        run: xcodebuild -version
+
       - name: Set up Flutter (Windows)
         if: ${{ matrix.platform == 'windows' }}
         uses: subosito/flutter-action@v2
