@@ -275,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 XStream is licensed under the GNU General Public License v3.0.
 
 This application includes components from:
-• Xray-core v25.3.6 – https://github.com/XTLS/Xray-core
+• Xray-core v25.8.3 – https://github.com/XTLS/Xray-core
   Licensed under the Mozilla Public License 2.0
 ''',
                   );

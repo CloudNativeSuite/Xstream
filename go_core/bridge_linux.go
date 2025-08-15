@@ -137,7 +137,7 @@ func WriteConfigFiles(xrayPathC, xrayContentC, servicePathC, serviceContentC, vp
 }
 
 func downloadAndInstallXray() error {
-	cmd := fmt.Sprintf("curl -L %s/xray-core/v25.3.6/Xray-linux-64.zip -o Xray-linux-64.zip && ", artifactBaseURL) +
+	cmd := fmt.Sprintf("curl -L %s/xray-core/v25.8.3/Xray-linux-64.zip -o Xray-linux-64.zip && ", artifactBaseURL) +
 		"mkdir -pv /opt/bin/ && " +
 		"unzip -o Xray-linux-64.zip && " +
 		"cp Xray-linux-64/xray /opt/bin/xray && chmod +x /opt/bin/xray"
