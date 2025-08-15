@@ -25,32 +25,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [linux, windows, macos, android, ios]
-        arch: [x64, arm64]
-        exclude:
-          - platform: linux
-            arch: arm64
-          - platform: windows
-            arch: arm64
-          - platform: macos
-            arch: x64
-          - platform: ios
-            arch: x64
-          - platform: android
-            arch: x64
         include:
           - platform: macos
             arch: arm64
+            runs-on: macos-latest
+            artifact: build-macos-arm64
           - platform: linux
             arch: x64
+            runs-on: ubuntu-22.04
+            artifact: build-linux-x64
           - platform: windows
             arch: x64
+            runs-on: windows-2019
+            winver: win10
+            artifact: build-windows-10-x64
+          - platform: windows
+            arch: x64
+            runs-on: windows-2022
+            winver: win11
+            artifact: build-windows-11-x64
           - platform: ios
             arch: arm64
+            runs-on: macos-latest
+            artifact: build-ios-arm64
           - platform: android
             arch: arm64
+            runs-on: ubuntu-latest
+            artifact: build-android-arm64
 
-    runs-on: ${{ fromJson('{"windows":"windows-latest","linux":"ubuntu-22.04","android":"ubuntu-latest","macos":"macos-latest","ios":"macos-latest"}')[matrix.platform] }}
+    runs-on: ${{ matrix.runs-on }}
 
     env:
       PLATFORM: ${{ matrix.platform }}
@@ -122,6 +125,11 @@ jobs:
           update: true
           install: mingw-w64-x86_64-gcc
           path-type: inherit
+
+      - name: Install VC++ Redistributable (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: powershell
+        run: choco install vcredist-all -y
 
       - name: Build Go shared library (Windows)
         if: ${{ matrix.platform == 'windows' }}
@@ -203,7 +211,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.platform }}-${{ matrix.arch }}
+          name: ${{ matrix.artifact }}
           path: |
             build/macos/*.dmg
             build/linux/x64/release/bundle/xstream-linux.zip
@@ -218,9 +226,10 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { name: macos, file_pattern: '*.dmg', remote_path: 'xstream/macos/stable/xstream-macos-latest.dmg' }
-          - { name: linux, file_pattern: 'xstream-linux.zip', remote_path: 'xstream/linux/stable//xstream-linux-latest.zip' }
-          - { name: windows, file_pattern: 'xstream-windows.zip', remote_path: 'xstream/windows/stable/xstream-windows-latest.zip' }
+          - { name: macos, file_pattern: 'build-macos-arm64/*.dmg', remote_path: 'xstream/macos/stable/xstream-macos-latest.dmg' }
+          - { name: linux, file_pattern: 'build-linux-x64/xstream-linux.zip', remote_path: 'xstream/linux/stable/xstream-linux-latest.zip' }
+          - { name: windows-10, file_pattern: 'build-windows-10-x64/xstream-windows.zip', remote_path: 'xstream/windows/win10/xstream-windows-latest.zip' }
+          - { name: windows-11, file_pattern: 'build-windows-11-x64/xstream-windows.zip', remote_path: 'xstream/windows/win11/xstream-windows-latest.zip' }
           - { name: github, file_pattern: '**/*', remote_path: '' }
 
     steps:
@@ -255,7 +264,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
-          FILE=$(find release-artifacts -name '${{ matrix.platform.file_pattern }}' | head -n 1)
+          FILE=$(find release-artifacts -path '*/${{ matrix.platform.file_pattern }}' | head -n 1)
           echo "Uploading $FILE to /data/update-server/${{ matrix.platform.remote_path }}"
           rsync -av "$FILE" root@"$VPS_HOST":/data/update-server/${{ matrix.platform.remote_path }} --delete
 

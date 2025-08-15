@@ -15,6 +15,19 @@ if ($source) {
     exit 1
 }
 
+# 复制 MSVC 运行时依赖
+$runtimeDlls = @("msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll")
+foreach ($dll in $runtimeDlls) {
+    $dllPath = Join-Path $env:SystemRoot "System32" $dll
+    if (Test-Path $dllPath) {
+        Copy-Item $dllPath -Destination $releaseDir -Force
+        Write-Host "Copied runtime: $dllPath"
+    } else {
+        Write-Error "Error: $dll not found!"
+        exit 1
+    }
+}
+
 # 打包
 Compress-Archive -Path "$releaseDir/*" -DestinationPath "$releaseDir/xstream-windows.zip" -Force
 
