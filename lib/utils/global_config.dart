@@ -142,6 +142,14 @@ class GlobalApplicationConfig {
     return logsDir.path;
   }
 
+  /// 获取设备指纹文件路径（用于桌面同步设备标识）
+  static Future<String> getDeviceFingerprintFilePath() async {
+    final basePath = await getSandboxBasePath();
+    final deviceDir = Directory('$basePath/device');
+    await deviceDir.create(recursive: true);
+    return '${deviceDir.path}/fingerprint.bin';
+  }
+
   /// 获取特定类型文件的完整路径
   static Future<String> getVpnNodesConfigPath() async {
     final basePath = await getSandboxBasePath();
