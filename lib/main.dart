@@ -17,6 +17,7 @@ import 'services/telemetry/telemetry_service.dart';
 import 'services/vpn_config_service.dart';
 import 'services/global_proxy_service.dart';
 import 'services/permission_guide_service.dart';
+import 'services/sync/desktop_sync_service.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,7 @@ void main(List<String> args) async {
   await GlobalProxyService.init();
   await PermissionGuideService.init();
   await ExperimentalFeatures.init();
+  await DesktopSyncService.instance.init();
   final debug = args.contains('--debug') ||
       Platform.executableArguments.contains('--debug');
   GlobalState.debugMode.value = debug;

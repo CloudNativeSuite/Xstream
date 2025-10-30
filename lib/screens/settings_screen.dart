@@ -10,6 +10,9 @@ import '../../services/vpn_config_service.dart';
 import '../../services/update/update_checker.dart';
 import '../../services/update/update_platform.dart';
 import '../../services/telemetry/telemetry_service.dart';
+import '../../services/session/session_manager.dart';
+import '../../services/sync/desktop_sync_service.dart';
+import '../../services/sync/sync_state.dart';
 import '../../utils/app_logger.dart';
 import '../widgets/log_console.dart' show LogLevel;
 
@@ -23,11 +26,26 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   Timer? _xrayMonitorTimer;
 
+  final SessionManager _sessionManager = SessionManager.instance;
+  final DesktopSyncService _syncService = DesktopSyncService.instance;
+  final TextEditingController _baseUrlController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   static const TextStyle _menuTextStyle = TextStyle(fontSize: 14);
   static final ButtonStyle _menuButtonStyle = ElevatedButton.styleFrom(
     minimumSize: const Size.fromHeight(36),
     textStyle: _menuTextStyle,
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _baseUrlController.text = _sessionManager.baseUrl.value;
+    _usernameController.text = _sessionManager.currentUser.value ?? '';
+    _sessionManager.baseUrl.addListener(_syncBaseUrlFromSession);
+    _sessionManager.currentUser.addListener(_syncUsernameFromSession);
+  }
 
   Widget _buildButton({
     required IconData icon,
@@ -60,6 +78,247 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Wrap(spacing: 8, runSpacing: 8, children: children),
         ],
       ),
+    );
+  }
+
+  void _syncBaseUrlFromSession() {
+    final value = _sessionManager.baseUrl.value;
+    if (_baseUrlController.text != value) {
+      _baseUrlController.text = value;
+    }
+  }
+
+  void _syncUsernameFromSession() {
+    final value = _sessionManager.currentUser.value ?? '';
+    if (_usernameController.text != value) {
+      _usernameController.text = value;
+    }
+  }
+
+  String _formatDateTime(DateTime dt) {
+    String twoDigits(int v) => v.toString().padLeft(2, '0');
+    final local = dt.toLocal();
+    return '${local.year}-${twoDigits(local.month)}-${twoDigits(local.day)} '
+        '${twoDigits(local.hour)}:${twoDigits(local.minute)}';
+  }
+
+  Future<void> _handleLogin() async {
+    final baseUrl = _baseUrlController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+    if (baseUrl.isEmpty || username.isEmpty || password.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.get('loginMissingFields'))),
+      );
+      return;
+    }
+
+    await _sessionManager.setBaseUrl(baseUrl);
+    final result = await _sessionManager.login(
+      username: username,
+      password: password,
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.message)),
+    );
+
+    if (result.success) {
+      _passwordController.clear();
+      final syncResult = await _syncService.syncNow(manual: true);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(syncResult.message)),
+      );
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    await _sessionManager.logout();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.get('logoutSuccess'))),
+    );
+  }
+
+  Future<void> _handleSyncNow() async {
+    final result = await _syncService.syncNow(manual: true);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.message)),
+    );
+  }
+
+  Widget _buildDesktopSyncCard(BuildContext context) {
+    return ValueListenableBuilder<SessionStatus>(
+      valueListenable: _sessionManager.status,
+      builder: (context, status, _) {
+        final isLoggedIn = status == SessionStatus.loggedIn;
+        return ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Card(
+            elevation: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.get('accountLogin'),
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _sessionManager.loading,
+                    builder: (context, loading, _) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: _baseUrlController,
+                            decoration: InputDecoration(
+                              labelText: context.l10n.get('serverAddress'),
+                            ),
+                            onSubmitted: (_) =>
+                                _sessionManager.setBaseUrl(_baseUrlController.text),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _usernameController,
+                            enabled: !loading && !isLoggedIn,
+                            decoration: InputDecoration(
+                              labelText: context.l10n.get('username'),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            enabled: !loading && !isLoggedIn,
+                            decoration: InputDecoration(
+                              labelText: context.l10n.get('password'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: loading
+                                    ? null
+                                    : (isLoggedIn
+                                        ? _handleLogout
+                                        : _handleLogin),
+                                icon: Icon(
+                                  isLoggedIn ? Icons.logout : Icons.login,
+                                ),
+                                label: Text(
+                                  context.l10n.get(
+                                      isLoggedIn ? 'logout' : 'login'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ValueListenableBuilder<bool>(
+                                valueListenable: _syncService.syncing,
+                                builder: (context, syncing, _) {
+                                  return ElevatedButton.icon(
+                                    onPressed:
+                                        isLoggedIn && !syncing ? _handleSyncNow : null,
+                                    icon: syncing
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(Icons.sync),
+                                    label: Text(
+                                      syncing
+                                          ? context.l10n.get('syncInProgress')
+                                          : context.l10n.get('syncNow'),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ValueListenableBuilder<String?>(
+                            valueListenable: _sessionManager.lastError,
+                            builder: (context, error, _) {
+                              if (error == null || isLoggedIn) {
+                                return const SizedBox.shrink();
+                              }
+                              return Text(
+                                error,
+                                style: const TextStyle(
+                                    color: Colors.redAccent, fontSize: 12),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 4),
+                          ValueListenableBuilder<SyncSummary>(
+                            valueListenable: SyncStateStore.instance.summary,
+                            builder: (context, summary, _) {
+                              final lastSync = summary.lastSuccessAt != null
+                                  ? _formatDateTime(summary.lastSuccessAt!)
+                                  : context.l10n.get('never');
+                              final metadata = summary.subscriptionMetadata;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${context.l10n.get('lastSyncTime')}: $lastSync',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  Text(
+                                    '${context.l10n.get('configVersion')}: ${summary.configVersion}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  if (metadata != null && metadata.isNotEmpty)
+                                    Text(
+                                      '${context.l10n.get('subscriptionMetadata')}: $metadata',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  if (summary.lastError != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: Text(
+                                        summary.lastError!,
+                                        style: const TextStyle(
+                                          color: Colors.redAccent,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  if (!isLoggedIn)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: Text(
+                                        context.l10n.get('syncNotLoggedIn'),
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -196,6 +455,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 8),
             const SizedBox(height: 16),
+            _buildSection(context.l10n.get('desktopSync'), [
+              _buildDesktopSyncCard(context),
+            ]),
             ValueListenableBuilder<bool>(
               valueListenable: GlobalState.isUnlocked,
               builder: (context, isUnlocked, _) {
@@ -331,6 +593,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _xrayMonitorTimer?.cancel();
+    _sessionManager.baseUrl.removeListener(_syncBaseUrlFromSession);
+    _sessionManager.currentUser.removeListener(_syncUsernameFromSession);
+    _baseUrlController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
