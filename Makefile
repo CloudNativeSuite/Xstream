@@ -9,6 +9,22 @@ ICON_DST := macos/Runner/Assets.xcassets/AppIcon.appiconset
 UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
 
+SERVICE_NAME := xray
+
+ifeq ($(UNAME_S),Darwin)
+SERVICE_START := brew services start $(SERVICE_NAME)
+SERVICE_STOP := brew services stop $(SERVICE_NAME)
+SERVICE_STATUS := brew services list | grep $(SERVICE_NAME)
+else ifeq ($(UNAME_S),Linux)
+SERVICE_START := systemctl --user start $(SERVICE_NAME)
+SERVICE_STOP := systemctl --user stop $(SERVICE_NAME)
+SERVICE_STATUS := systemctl --user status $(SERVICE_NAME)
+else
+SERVICE_START := @echo "Service management not supported on $(UNAME_S)"
+SERVICE_STOP := @echo "Service management not supported on $(UNAME_S)"
+SERVICE_STATUS := @echo "Service management not supported on $(UNAME_S)"
+endif
+
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 BUILD_ID := $(shell git rev-parse --short HEAD)
 BUILD_DATE := $(shell date "+%Y-%m-%d")
@@ -26,7 +42,7 @@ DMG_NAME := $(shell \
 		echo "xstream-dev-$(BUILD_ID).dmg"; \
 	fi)
 
-.PHONY: all macos-intel macos-arm64 windows-x64 linux-x64 linux-arm64 android-arm64 ios-arm64 clean
+.PHONY: all macos-intel macos-arm64 windows-x64 linux-x64 linux-arm64 android-arm64 ios-arm64 clean service-start service-stop service-status
 
 all: macos-intel macos-arm64 windows-x64 linux-x64 linux-arm64 android-arm64 ios-arm64
 
@@ -98,15 +114,7 @@ macos-arm64:
 		echo "Skipping macOS ARM64 build (not on ARM architecture)"; \
 	fi
 
-windows-x64:
-@if [ "$(UNAME_S)" = "Windows_NT" ] || [ "$(OS)" = "Windows_NT" ]; then \
- echo "Building for Windows (native)..."; \
- flutter pub get; \
- flutter pub outdated; \
- flutter build windows --release; \
- else \
- echo "Windows build only supported on native Windows systems"; \
- fi
+windows-x64: ; @if [ "$(UNAME_S)" = "Windows_NT" ] || [ "$(OS)" = "Windows_NT" ]; then echo "Building for Windows (native)..."; flutter pub get; flutter pub outdated; flutter build windows --release; else echo "Windows build only supported on native Windows systems"; fi
 
 linux-x64:
 	@if [ "$(UNAME_S)" = "Linux" ]; then \
@@ -139,14 +147,13 @@ android-arm64:
 		echo "Android build not supported on this platform"; \
 	fi
 
-ios-arm64:
-	@if [ "$(UNAME_S)" = "Darwin" ]; then \
-		echo "Building for iOS arm64..."; \
-		$(FLUTTER) build ios --release --no-codesign; \
-		cd build/ios/iphoneos && zip -r xstream.app.zip Runner.app; \
-	else \
-		echo "iOS build only supported on macOS"; \
-	fi
+ios-arm64: ; @if [ "$(UNAME_S)" = "Darwin" ]; then echo "Building for iOS arm64..."; $(FLUTTER) build ios --release --no-codesign; cd build/ios/iphoneos && zip -r xstream.app.zip Runner.app; else echo "iOS build only supported on macOS"; fi
+
+service-start: ; @$(SERVICE_START)
+
+service-stop: ; @$(SERVICE_STOP)
+
+service-status: ; @$(SERVICE_STATUS)
 
 clean:
 	echo "Cleaning build outputs..."
